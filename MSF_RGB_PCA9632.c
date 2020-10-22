@@ -48,19 +48,17 @@ const uint8_t PCA_LDRx_OFF = (0u);
 const uint8_t PCA_LDRx_ON = (1u);
 const uint8_t PCA_LDRx_PWM = (2u);
 const uint8_t PCA_LDRx_PWMGRP = (3u);
-const uint8_t RGBLED_Red = (4u);
-const uint8_t RGBLED_Green = (3u);
-const uint8_t RGBLED_Blue = (2u);
-
-// This should eventually drop the separate Red Green Blue thing and just move to a value1 value2 value3
-// Then require the application to manage which value is red green blue in the array
+const uint8_t LED0 = (2u);
+const uint8_t LED1 = (3u);
+const uint8_t LED2 = (4u);
+const uint8_t LED3 = (5u);
 
 /**
 	@brief Initialize LED
 	@details Initializes LED controller
 	@param[in] i2caddr Address of the PCA9632 to initialize
 */
-void LED_init(uint8_t i2caddr)
+void LED_Init(uint8_t i2caddr)
 {
 	i2c_send(PCARESETADDR, (uint8_t*)PCA_ResetCMD, PCA_ResetCMD_Length);
 	uint8_t config[10] = {
@@ -81,54 +79,73 @@ void LED_init(uint8_t i2caddr)
 }
 
 /**
-	@brief Update Red Color
-	@details Updates the Red LED on a controller.
+	@brief Update Single LED Color
+	@details Updates a single LED color on the controller
 	@param[in] i2caddr Address of LED controller
-	@param[in] value Value to set RED led to
+	@param[in] led_update Index of the LED to update(0-3)
+	@param[in] value Value to set led to
+	@returns Message attempted sent(1) or not(0)
 */
-void LED_updateRed(uint8_t i2caddr, uint8_t value)
+uint8_t LED_SingleUpdate(uint8_t i2caddr, uint8_t led_update, uint8_t value)
 {
-	uint8_t message[2] = {(RGBLED_Red | PCA_AUTOINC_NONE), value};
-	i2c_send(i2caddr, message, 2);
+	uint8_t message[2] = {PCA_AUTOINC_NONE, value};
+	switch (led_update)
+	{
+		case (0):
+		{
+			message[0] |= LED0; 
+			break;
+		}
+		case (1):
+		{
+			message[0] |= LED1;
+			break;
+		}
+		case (2):
+		{
+			message[0] |= LED2;
+			break;
+		}
+		case (3):
+		{
+			message[0] |= LED3;
+			break;
+		}
+		default:
+		{
+			message[0] = 0x00;
+			break;
+		}
+	}
+	
+	if (message[0])
+	{
+		i2c_send(i2caddr, message, 2);
+		return 1;
+	}
+	
+	return 0;
 }
 
 /**
-	@brief Update Green Color
-	@details Updates the Green LED on a controller.
+	@brief Update all LEDS on device.
+	@details Update all LEDs at once, must be in sequential order from LED0 onward.
 	@param[in] i2caddr Address of LED controller
-	@param[in] value Value to set Green led to
+	@param[in] values Pointer to array of values
+	@param[in] length Length of values array
 */
-void LED_updateGreen(uint8_t i2caddr, uint8_t value)
+void LED_UpdateAll(uint8_t i2caddr, uint8_t *values, uint8_t length)
 {
-	uint8_t message[2] = {(RGBLED_Green | PCA_AUTOINC_NONE), value};
-	i2c_send(i2caddr, message, 2);
-}
-
-/**
-	@brief Update Blue Color
-	@details Updates the Blue LED on a controller.
-	@param[in] i2caddr Address of LED controller
-	@param[in] value Value to set Blue led to
-*/
-void LED_updateBlue(uint8_t i2caddr, uint8_t value)
-{
-	uint8_t message[2] = {(RGBLED_Blue | PCA_AUTOINC_NONE), value};
-	i2c_send(i2caddr, message, 2);
-}
-
-/**
-	@brief Update RGB Colors
-	@details Update 3 LED Values all at once.
-	@param[in] i2caddr Address of LED controller
-	@param[in] value Value to set LED1
-	@param[in] value Value to set LED2
-	@param[in] value Value to set LED3
-*/
-void LED_updateRGB(uint8_t i2caddr, uint8_t value1, uint8_t value2, uint8_t value3)
-{
-	//Goes Blue, Green, Red
-	uint8_t message[4] = {(PCA_REG_PWM0 | PCA_AUTOINC_ALL), value1, value2, value3};
-	i2c_send(i2caddr, message, 4);
+	uint8_t message[length+1];
+	message[0] = (PCA_REG_PWM0 | PCA_AUTOINC_ALL);
+	uint8_t *mPointer = message+1;
+	for (uint8_t i = 0; i<length; i++)
+	{
+		*mPointer = *values;
+		mPointer++;
+		values++;
+	}
+	i2c_send(i2caddr, message, (length+1));
 }
 
 /**
@@ -137,7 +154,7 @@ void LED_updateRGB(uint8_t i2caddr, uint8_t value1, uint8_t value2, uint8_t valu
 	@param[in] i2caddr Address of LED controller
 	@param[in] value Value to set brightness
 */
-void LED_updateBrightness(uint8_t i2caddr, uint8_t value)
+void LED_UpdateBrightness(uint8_t i2caddr, uint8_t value)
 {
 	uint8_t message[2] = {(PCA_REG_GRPPWM | PCA_AUTOINC_NONE), value};
 	i2c_send(i2caddr, message, 2);
