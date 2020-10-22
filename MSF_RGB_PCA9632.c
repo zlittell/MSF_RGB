@@ -1,5 +1,13 @@
+/**
+* @file MSF_RGB_PCA9632.c
+* @brief NXP PCA9632 RGB Driver
+* @author Zack Littell
+* @company Mechanical Squid Factory
+* @project MSF_RGB
+*/
+
 #include <stdint.h>
-#include "MSF_I2C.h"
+#include "MSF_I2C/MSF_I2C.h"
 
 #define PCARESETADDR 0x03
 #define PCA_ResetCMD_Length 2
@@ -44,6 +52,14 @@ const uint8_t RGBLED_Red = (4u);
 const uint8_t RGBLED_Green = (3u);
 const uint8_t RGBLED_Blue = (2u);
 
+// This should eventually drop the separate Red Green Blue thing and just move to a value1 value2 value3
+// Then require the application to manage which value is red green blue in the array
+
+/**
+	@brief Initialize LED
+	@details Initializes LED controller
+	@param[in] i2caddr Address of the PCA9632 to initialize
+*/
 void LED_init(uint8_t i2caddr)
 {
 	i2c_send(PCARESETADDR, (uint8_t*)PCA_ResetCMD, PCA_ResetCMD_Length);
@@ -64,24 +80,50 @@ void LED_init(uint8_t i2caddr)
 	i2c_send(i2caddr, config, 10);
 }
 
+/**
+	@brief Update Red Color
+	@details Updates the Red LED on a controller.
+	@param[in] i2caddr Address of LED controller
+	@param[in] value Value to set RED led to
+*/
 void LED_updateRed(uint8_t i2caddr, uint8_t value)
 {
 	uint8_t message[2] = {(RGBLED_Red | PCA_AUTOINC_NONE), value};
 	i2c_send(i2caddr, message, 2);
 }
 
+/**
+	@brief Update Green Color
+	@details Updates the Green LED on a controller.
+	@param[in] i2caddr Address of LED controller
+	@param[in] value Value to set Green led to
+*/
 void LED_updateGreen(uint8_t i2caddr, uint8_t value)
 {
 	uint8_t message[2] = {(RGBLED_Green | PCA_AUTOINC_NONE), value};
 	i2c_send(i2caddr, message, 2);
 }
 
+/**
+	@brief Update Blue Color
+	@details Updates the Blue LED on a controller.
+	@param[in] i2caddr Address of LED controller
+	@param[in] value Value to set Blue led to
+*/
 void LED_updateBlue(uint8_t i2caddr, uint8_t value)
 {
 	uint8_t message[2] = {(RGBLED_Blue | PCA_AUTOINC_NONE), value};
 	i2c_send(i2caddr, message, 2);
 }
 
+/**
+	@brief Update RGB Colors
+	@details Update 3 LED Values all at once.
+	@param[in] i2caddr Address of LED controller
+	@param[in] value Value to set LED1
+	@param[in] value Value to set LED2
+	@param[in] value Value to set LED3
+*/
 void LED_updateRGB(uint8_t i2caddr, uint8_t value1, uint8_t value2, uint8_t value3)
 {
 	//Goes Blue, Green, Red
@@ -89,6 +131,12 @@ void LED_updateRGB(uint8_t i2caddr, uint8_t value1, uint8_t value2, uint8_t valu
 	i2c_send(i2caddr, message, 4);
 }
 
+/**
+	@brief Update brightness
+	@details Update the brightness of the LED
+	@param[in] i2caddr Address of LED controller
+	@param[in] value Value to set brightness
+*/
 void LED_updateBrightness(uint8_t i2caddr, uint8_t value)
 {
 	uint8_t message[2] = {(PCA_REG_GRPPWM | PCA_AUTOINC_NONE), value};
