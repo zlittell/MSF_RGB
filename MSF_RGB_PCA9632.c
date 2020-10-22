@@ -159,3 +159,29 @@ void LED_UpdateBrightness(uint8_t i2caddr, uint8_t value)
 	uint8_t message[2] = {(PCA_REG_GRPPWM | PCA_AUTOINC_NONE), value};
 	i2c_send(i2caddr, message, 2);
 }
+
+/**
+	@brief LED Enable
+	@details Turns on LEDs on controller
+	@param[in] i2caddr Address of LED controller
+*/
+void LED_Enable(uint8_t i2caddr)
+{
+	uint8_t message[2] = {(PCA_REG_LEDOUT | PCA_AUTOINC_NONE),
+	((PCA_LDRx_PWMGRP << PCA_LEDOUT_LDR3_POS)|	//LEDOUT
+	(PCA_LDRx_PWMGRP << PCA_LEDOUT_LDR2_POS)|
+	(PCA_LDRx_PWMGRP << PCA_LEDOUT_LDR1_POS)|
+	(PCA_LDRx_PWMGRP << PCA_LEDOUT_LDR0_POS))};
+	i2c_send(i2caddr, message, 2);
+}
+
+/**
+	@brief LED Disable
+	@details Turns off LEDs on controller
+	@param[in] i2caddr Address of LED controller
+*/
+void LED_Disable(uint8_t i2caddr)
+{
+	uint8_t message[2] = {(PCA_REG_LEDOUT | PCA_AUTOINC_NONE),(0x00)};
+	i2c_send(i2caddr, message, 2);
+}
